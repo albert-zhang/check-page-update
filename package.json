@@ -1,0 +1,22 @@
+{
+  "name": "check-page-update",
+  "version": "0.0.1",
+  "description": "Check page update",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -Rf dist && rm -Rf dist1 && rm -Rf dist2 && tsc --outDir dist1 && babel dist1 --out-dir dist2 && mkdir dist && for f in dist2/*.js; do uglifyjs --verbose $f --output dist/${f##*/}; done"
+  },
+  "author": "Albert Zhang",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "axios": "^0.18.0",
+    "typescript": "^3.1.4",
+    "uglify-js": "^3.4.9"
+  },
+  "dependencies": {
+    "@babel/polyfill": "^7.0.0"
+  }
+}
