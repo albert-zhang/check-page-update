@@ -4,7 +4,7 @@
   "description": "Check page update",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rm -Rf dist && rm -Rf dist1 && rm -Rf dist2 && tsc --outDir dist1 && babel dist1 --out-dir dist2 && mkdir dist && for f in dist2/*.js; do uglifyjs --verbose --output dist/${f##*/} -b max_line_len=100 -b beautify=false -c -m -- $f; done"
+    "build": "sh -v build.sh"
   },
   "author": "Albert Zhang",
   "license": "ISC",
