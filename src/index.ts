@@ -1,56 +1,68 @@
 import { AxiosResponse, AxiosInstance } from 'axios';
 
-declare const axios: AxiosInstance;
-
 interface MyWindow extends Window {
   CHECK_PAGE_UPDATE__DEBUG: boolean;
-  checkPageUpdate: (typeof __CheckPageUpdate);
+  checkPageUpdate: any;
+  axios?: AxiosInstance;
+  checkPageUpdateClient: (url: string) => Promise<string | null>;
 }
 
 declare const window: MyWindow;
 
+type Callback = () => boolean;
+
 const CHECK_PAGE_UPDATE__LSK = 'CHECK_PAGE_UPDATE__LSK';
 
-interface CheckPageUpdateConfig {
-  root?: string;
-}
-
-const __CheckPageUpdate = {
-  run(cfg?: CheckPageUpdateConfig) {
-    if (!cfg) {
-      cfg = {};
-    }
-    if (!cfg.root) {
-      cfg.root = '/';
-    }
-    const savedLastModifed = this.getSavedLastModified();
-    axios.get(cfg.root, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+window.checkPageUpdateClient = (url: string) => {
+  if (window.fetch) {
+    return window.fetch(url).then((r: Response) => {
+      if (r.status < 200 || r.status > 299) {
+        return null;
+      }
+      return r.headers.get('last-modified');
+    }).catch(() => {
+      return null;
+    });
+  } else if (window.axios) {
+    return window.axios!.get(url).then((r: AxiosResponse) => {
+      return r.headers['last-modified'];
+    }).catch(() => {
+      return null;
+    });
+  } else {
+    console.error('[check-page-update] no suitable HTTP client');
+    return ({
+      then(handler: (...args: any[]) => any) {
+        setTimeout(() => {
+          handler(null);
+        });
       },
-    }).then((r: AxiosResponse) => {
-      const lastModified = new Date(r.headers['last-modified']).getTime();
+    }) as Promise<null>;
+  }
+};
+
+window.checkPageUpdate = {
+  run(callback: Callback = () => true) {
+    const savedLastModifed = this.gLM();
+    window.checkPageUpdateClient(location.href).then((dt: string | null) => {
+      const lastModified = new Date(dt!).getTime();
       if (isNaN(lastModified)) {
-        this.log('header last-modified is NaN');
         return;
       }
       if (savedLastModifed === null) {
-        this.log('no savedLastModifed');
-        this.saveLastModified(lastModified);
-        this.log('lastModified saved: ' + lastModified);
+        this.sLM(lastModified);
       } else {
-        if (lastModified === savedLastModifed) {
-          this.log('up to date');
-        } else {
-          this.log('new version found, will reload');
-          this.saveLastModified(lastModified);
-          this.reload();
+        if (lastModified !== savedLastModifed) {
+          this.sLM(lastModified);
+          if (callback()) {
+            this.r();
+          }
         }
       }
     });
   },
 
-  getSavedLastModified() {
+  gLM() {
     let d: number | null = parseInt(localStorage.getItem(CHECK_PAGE_UPDATE__LSK)!, 10);
     if (isNaN(d)) {
       d = null;
@@ -58,19 +70,11 @@ const __CheckPageUpdate = {
     return d;
   },
 
-  saveLastModified(d: number) {
+  sLM(d: number) {
     localStorage.setItem(CHECK_PAGE_UPDATE__LSK, d + '');
   },
 
-  reload() {
+  r() {
     location.reload(true);
   },
-
-  log(str: string) {
-    if (window.CHECK_PAGE_UPDATE__DEBUG === true) {
-      console.log('[CHECK_PAGE_UPDATE] ' + str);
-    }
-  },
 };
-
-window.checkPageUpdate = __CheckPageUpdate;
