@@ -6,7 +6,7 @@ And the `check-page-update` is to trying to make things better. It will start a 
 
 ## Usage
 
-Download `dist/index.js`, and paste to your entry page (`index.html` for example), then invoke `window.checkPageUpdate.run()`.
+Download [dist/index.js](https://raw.githubusercontent.com/albert-zhang/check-page-update/master/dist/index.js), and paste to your entry page (`index.html` for example), then invoke `window.checkPageUpdate.run()`.
 
 The script is compressed to keep the payload low.
 
